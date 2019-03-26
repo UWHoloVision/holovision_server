@@ -1,7 +1,5 @@
 #pragma once
 #include <iostream>
-#include <pcl/io/pcd_io.h>
-#include <pcl/point_types.h>
 #include <Eigen/Dense>
 #include <cassert>
 #include <fstream>
@@ -14,7 +12,7 @@ struct FrameMessage {
   int32_t height;
   int32_t bytes_per_point;
   int32_t points_per_pixel;
-  // transform matricse
+  // transform matrices
   Eigen::Matrix4f frame_to_origin;
   Eigen::Matrix4f intrinsics;
   Eigen::Matrix4f extrinsics;

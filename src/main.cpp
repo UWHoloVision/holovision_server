@@ -1,4 +1,6 @@
 #include <iostream>
+
+#include "DepthFrameTransformer.h"
 #include "FrameMessage.h"
 
 #include <boost/thread/thread.hpp>
@@ -18,6 +20,7 @@
 #include <vtkPolyData.h>
 #include <vtkFillHolesFilter.h>
 #include <pcl/surface/vtk_smoothing/vtk_utils.h>
+
 // depth transforms
 // TODO: put in class
 Eigen::Matrix4f camera_view_to_world_coord(Eigen::Matrix4f& frame_to_origin, Eigen::Matrix4f& extrinsics) {
@@ -284,9 +287,8 @@ void to_point_cloud(pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr, Eigen::
 }
 
 int main (int argc, char** argv) {
-  // std::cout << holovision::read_msg_from_file("../262754255709.bin") << std::endl;
   pcl::PointCloud<pcl::PointXYZ>::Ptr basic_cloud_ptr (new pcl::PointCloud<pcl::PointXYZ>);
-  std::string PROJECTION_BIN_PATH = "./src/short_throw_depth_camera_space_projection.bin";
+  
   std::vector<std::string> paths {
     "262756114425",
     "262770095130",
@@ -321,17 +323,9 @@ int main (int argc, char** argv) {
   };
   pcl::PointCloud<pcl::PointXYZ>::Ptr cloud (new pcl::PointCloud<pcl::PointXYZ>);
   for (auto path: paths) {
-    // auto d_msg = holovision::read_msg_from_file("../262756114425.bin");
     auto d_msg = holovision::read_msg_from_file("../out/" + path + ".bin");
-    // std::cout << d_msg << std::endl;
-    auto camera_view_to_world_coord_transform = camera_view_to_world_coord(d_msg.frame_to_origin, d_msg.extrinsics);
-    // std::cout << camera_view_to_world_coord_transform << std::endl;
-    auto tup = read_projection_bin_from_file(PROJECTION_BIN_PATH, d_msg.width, d_msg.height);
-    auto u_proj = std::move(std::get<0>(tup));
-    auto v_proj = std::move(std::get<1>(tup));
-    auto camera_view_pts = pointcloud_camera_view(d_msg, u_proj, v_proj);
-    auto world_pts = camera_view_to_world(camera_view_pts, camera_view_to_world_coord_transform);
-    to_point_cloud(basic_cloud_ptr, world_pts);
+    holovision::DepthFrameTransformer dft(std::move(d_msg));
+    dft.get_points(basic_cloud_ptr);
   }
   voxelize(cloud, basic_cloud_ptr);
   visualize(cloud);

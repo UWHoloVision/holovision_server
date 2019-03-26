@@ -47,4 +47,20 @@ void render_30_depth_frames_as_mesh() {
   visualizer.render();
 }
 
+void render_30_depth_frames_from_socket() {
+  FrameSocket fs;
+  fs.connect();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  for(auto i = 0; i < 30; i++) {
+    std::cout << "frame " << i << std::endl;
+    auto d_msg = fs.poll_depth();
+    auto rgb_msg = fs.poll_depth();
+    holovision::DepthFrameTransformer dft(std::move(d_msg));
+    dft.get_points(cloud);
+  }
+  auto mesh = holovision::pointcloud_to_mesh(cloud);
+  holovision::Visualizer visualizer(cloud);
+  visualizer.render();
+}
+
 } // namespace holovision

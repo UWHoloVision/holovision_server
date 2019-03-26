@@ -28,6 +28,8 @@ struct FrameMessage {
 
 std::ostream& operator<<(std::ostream&, const FrameMessage&);
 
+std::tuple<int32_t, int32_t> read_msg_header(std::istream&);
+FrameMessage read_msg_body(std::istream&);
 FrameMessage read_msg_from_file(const std::string);
 
 

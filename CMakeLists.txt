@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.1.0 FATAL_ERROR)
 project(holovision_server)
 set(CMAKE_CXX_STANDARD 11)
-find_package(PCL 1.8 REQUIRED COMPONENTS common io)
+find_package(PCL 1.8 REQUIRED)
 include_directories(${PCL_INCLUDE_DIRS})
 link_directories(${PCL_LIBRARY_DIRS})
 add_definitions(${PCL_DEFINITIONS})

@@ -25,14 +25,14 @@ std::ostream& operator<<(std::ostream &os, const FrameMessage &fm) {
 }
 
 void fill_matrix4f(std::istream& in, Eigen::Matrix4f& m) {
-  for (auto col = 0; col < 4; col++)
-  for (auto row = 0; row < 4; row++) {
+  for (auto row = 0; row < 4; row++)
+  for (auto col = 0; col < 4; col++) {
     float cell;
     assert(in.read(
       reinterpret_cast<char*>(&cell),
       sizeof cell
     ));
-    m(col, row) = cell;
+    m(row, col) = cell;
   }
 }
 
@@ -78,14 +78,14 @@ FrameMessage read_msg_body(std::istream& in) {
   // depth
   if (fm.bytes_per_point == 2 && fm.points_per_pixel == 1) {
     fm.d = std::make_unique<Eigen::MatrixXi>(fm.height, fm.width);
-    for (auto col = 0; col < fm.height; col++)
-    for (auto row = 0; row < fm.width; row++) {
+    for (auto row = 0; row < fm.height; row++)
+    for (auto col = 0; col < fm.width; col++) {
       int16_t d;
       assert(in.read(
         reinterpret_cast<char*>(&d),
         sizeof d
       ));
-      (*fm.d)(col, row) = d;
+      (*fm.d)(row, col) = d;
     }
   }
   // color
@@ -93,15 +93,15 @@ FrameMessage read_msg_body(std::istream& in) {
     fm.r = std::make_unique<Eigen::MatrixXi>(fm.height, fm.width);
     fm.g = std::make_unique<Eigen::MatrixXi>(fm.height, fm.width);
     fm.b = std::make_unique<Eigen::MatrixXi>(fm.height, fm.width);
-    for (auto col = 0; col < fm.height; col++)
-    for (auto row = 0; row < fm.width; row++) {
+    for (auto row = 0; row < fm.height; row++)
+    for (auto col = 0; col < fm.width; col++) {
       int8_t r, g, b;
       assert(in.read(reinterpret_cast<char*>(&r), sizeof r));
       assert(in.read(reinterpret_cast<char*>(&r), sizeof g));
       assert(in.read(reinterpret_cast<char*>(&r), sizeof b));
-      (*fm.r)(col, row) = r;
-      (*fm.g)(col, row) = g;
-      (*fm.b)(col, row) = b;
+      (*fm.r)(row, col) = r;
+      (*fm.g)(row, col) = g;
+      (*fm.b)(row, col) = b;
     }
   }
   return fm;
@@ -110,9 +110,11 @@ FrameMessage read_msg_body(std::istream& in) {
 FrameMessage read_msg_from_file(const std::string path) {
   std::ifstream msg_stream(path, std::ios::binary);
   if (!msg_stream) {
-    throw std::runtime_error("Couldn't open file");
+    throw std::runtime_error("Couldn't open file " + path);
   }
-  return read_msg_body(msg_stream);
+  auto msg = read_msg_body(msg_stream);
+  msg_stream.close();
+  return msg;
 }
 
 } // namespace holovision

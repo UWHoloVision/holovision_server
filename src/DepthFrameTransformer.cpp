@@ -3,7 +3,7 @@
 namespace holovision {
 
 const std::string DepthFrameTransformer::DEFAULT_UV_UNPROJECTION_BIN_PATH = 
-  "./src/short_throw_depth_camera_space_projection.bin";
+  "../src/short_throw_depth_camera_space_projection.bin";
 
 DepthFrameTransformer::DepthFrameTransformer(
   FrameMessage&& frame, 

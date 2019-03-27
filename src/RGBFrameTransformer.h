@@ -15,7 +15,10 @@ public:
     // Constructor
     RGBFrameTransformer(FrameMessage&&);
     // Associate depth points to RGB colors provided in the frame
-    void get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, Eigen::MatrixXf&&);
+    void get_RGBD_pts(
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr, 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr, 
+        Eigen::MatrixXf&&);
 private:
     // The associated RGB frame
     const FrameMessage _frame;

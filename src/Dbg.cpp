@@ -2,28 +2,43 @@
 
 namespace holovision {
 
+std::vector<std::string> glob_snapshots(const std::string& pattern) {
+  // glob struct resides on the stack
+  glob_t glob_result;
+  memset(&glob_result, 0, sizeof(glob_result));
+  // do the glob operation
+  int return_value = glob(pattern.c_str(), GLOB_TILDE, NULL, &glob_result);
+  if(return_value != 0) {
+    globfree(&glob_result);
+    std::stringstream ss;
+    ss << "glob() failed with return_value " << return_value << endl;
+    throw std::runtime_error(ss.str());
+  }
+  // collect all the filenames into a std::list<std::string>
+  std::vector<std::string> filenames;
+  for(size_t i = 0; i < glob_result.gl_pathc; ++i) {
+    auto filename = std::string(glob_result.gl_pathv[i]);
+    // replace extension
+    filename.replace(filename.end()-3, filename.end(), "bin");
+    filenames.push_back(filename);
+  }
+  // cleanup
+  globfree(&glob_result);
+  return filenames;
+}
+
+std::vector<std::string> get_depthframe_files() {
+  return glob_snapshots("../out/*.pgm");
+}
+std::vector<std::string> get_colorframe_files() {
+  return glob_snapshots("../out/*.ppm");
+}
+
 // renders depth frames of a room as a mesh
 void colorpoints_pipeline() {
-  std::vector<std::string> depthframes {
-  "7353594134873", "7353609438210", "7353626165327", "7353645098646",
-  "7353661784886", "7353678429122", "7353695486386", "7353712914172",
-  "7353729474088", "7353748941345", "7353769005952", "7353788343047",
-  "7353804261904", "7353819644851", "7353836920067", "7353853635836",
-  "7353872780169", "7353890789226", "7353905104548", "7353923892730",
-  "7353940250858", "7353961500827", "7353976907693", "7353991613922",
-  "7354008051477", "7354025476026", "7354044877011", "7354063673988",
-  "7354082332509", "7354111135316"
-  };
-  std::vector<std::string> colorframes {
-  "7353593051478", "7353608371830", "7353625357424", "7353644341342",
-  "7353660993939", "7353676980357", "7353693632947", "7353710951601",
-  "7353727937215", "7353747920266", "7353767570313", "7353787220327",
-  "7353803206759", "7353818527149", "7353835845791", "7353852498340",
-  "7353872148377", "7353889133967", "7353905120451", "7353923105213",
-  "7353939091659", "7353960073886", "7353975727314", "7353989382385",
-  "7354006701042", "7354024352774", "7354043669724", "7354062653666",
-  "7354082636726", "7354110279985"
-  };
+  std::vector<std::string> depthframes = get_depthframe_files();
+  std::vector<std::string> colorframes = get_colorframe_files();
+
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr agg_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
   for (auto i = 0; i < depthframes.size(); i++) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
@@ -31,18 +46,15 @@ void colorpoints_pipeline() {
     std::cout << "frame " << i << std::endl;
     // read depth frame
     auto depthframe = depthframes.at(i);
-    auto d_msg = holovision::read_msg_from_file("../out/" + depthframe + ".bin");
+    auto d_msg = holovision::read_msg_from_file(depthframe);
     holovision::DepthFrameTransformer dft(std::move(d_msg));
     dft.get_points(pointcloud);
-    // XYZ -> XYZRGB conversion
-    pcl::copyPointCloud(*pointcloud, *colorcloud);
     // read color frame
     auto colorframe = colorframes.at(i);
-    auto r_msg = holovision::read_msg_from_file("../out/" + colorframe + ".bin");
+    auto r_msg = holovision::read_msg_from_file(colorframe);
     holovision::RGBFrameTransformer rgbft(std::move(r_msg));
     // compute rgbd points
-    rgbft.get_RGBD_pts(colorcloud, std::move(dft.get_pts_matrix()));
-    std::cout << "completed frame " << i << std::endl;
+    rgbft.get_RGBD_pts(colorcloud, pointcloud, std::move(dft.get_pts_matrix()));
     // add to agg_cloud
     *agg_cloud += *colorcloud;
   }
@@ -61,9 +73,9 @@ void render_30_depth_frames_from_socket() {
     holovision::DepthFrameTransformer dft(std::move(d_msg));
     dft.get_points(cloud);
   }
-  // auto mesh = holovision::pointcloud_to_mesh(cloud);
-  // holovision::Visualizer visualizer(cloud);
-  // visualizer.render();
+  auto mesh = holovision::pointcloud_to_mesh(cloud);
+  holovision::Visualizer visualizer(cloud);
+  visualizer.render();
 }
 
 } // namespace holovision

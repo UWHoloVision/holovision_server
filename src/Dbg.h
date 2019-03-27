@@ -2,10 +2,12 @@
 
 #include "DepthFrameTransformer.h"
 #include "FrameMessage.h"
+#include "MeshMessage.h"
 #include "PointCloudUtils.h"
 #include "Visualizer.h"
 
 #include "FrameSocket.h"
+#include "MeshSocket.h"
 
 // debugging utils
 namespace holovision {

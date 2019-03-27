@@ -95,10 +95,10 @@ FrameMessage read_msg_body(std::istream& in) {
     fm.b = std::make_unique<Eigen::MatrixXi>(fm.height, fm.width);
     for (auto row = 0; row < fm.height; row++)
     for (auto col = 0; col < fm.width; col++) {
-      int8_t r, g, b;
+      uint8_t r, g, b;
       assert(in.read(reinterpret_cast<char*>(&r), sizeof r));
-      assert(in.read(reinterpret_cast<char*>(&r), sizeof g));
-      assert(in.read(reinterpret_cast<char*>(&r), sizeof b));
+      assert(in.read(reinterpret_cast<char*>(&g), sizeof g));
+      assert(in.read(reinterpret_cast<char*>(&b), sizeof b));
       (*fm.r)(row, col) = r;
       (*fm.g)(row, col) = g;
       (*fm.b)(row, col) = b;

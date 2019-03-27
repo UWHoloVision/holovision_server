@@ -16,12 +16,13 @@ public:
   DepthFrameTransformer(FrameMessage&&, const std::string);
   DepthFrameTransformer(FrameMessage&&);
 
-  void get_points(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
-  std::shared_ptr<Eigen::MatrixXf> _pts;
+  void get_points(pcl::PointCloud<pcl::PointXYZ>::Ptr);
+  Eigen::MatrixXf get_pts_matrix();
 
 private:
   const FrameMessage _frame;
   const std::string _unproj_path;
+  std::unique_ptr<Eigen::MatrixXf> _pts;
   // transform matrices
   Eigen::Matrix4f _cameraview_to_world;
   // u, v unprojection mappings

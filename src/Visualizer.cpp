@@ -8,7 +8,7 @@ Visualizer::Visualizer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr pointcloud):
   config();
   _viewer->addPointCloud<pcl::PointXYZRGB>(pointcloud, "point cloud");
   _viewer->setPointCloudRenderingProperties(
-    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "point cloud");
+    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "point cloud");
 }
 
 Visualizer::Visualizer(pcl::PolygonMesh::ConstPtr mesh):
@@ -25,9 +25,9 @@ void Visualizer::render() {
 }
 
 void Visualizer::config() {
-  _viewer->setBackgroundColor (0, 0, 0);
-  _viewer->addCoordinateSystem (0.6);
-  _viewer->initCameraParameters ();
+  _viewer->setBackgroundColor(0.224, 1.0, 0.78);
+  _viewer->addCoordinateSystem(0.6);
+  _viewer->initCameraParameters();
 }
 
 } // namespace holovision

@@ -11,23 +11,31 @@ void RGBFrameTransformer::compute_world_to_cameraview(){
         _frame.frame_to_origin.transpose().inverse();
 }
 
-void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::shared_ptr<Eigen::MatrixXf> world_pts){
-    // Note: world_pts is 4xN, not Nx4 (is already homogenized)
+void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Eigen::MatrixXf&& world_pts){
     compute_world_to_cameraview();
-    // Note this currently changes the world_pts matrix.
-    // world_pts->conservativeResize(world_pts->rows(), world_pts->cols()+1);
-    // world_pts->col(world_pts->cols()-1) = Eigen::VectorXf::Ones(world_pts->rows());
-    *world_pts = world_pts->block(0,0,3,world_pts->cols()); // Create 3-D
-    *world_pts = world_pts->colwise().homogeneous();
-    Eigen::MatrixXf camera_view_pts = (_world_to_camera_view * (*world_pts)).transpose();
-    camera_view_pts.col(camera_view_pts.cols()-1) = Eigen::VectorXf::Ones(camera_view_pts.rows());
-    Eigen::MatrixXf camera_projection_pts = (_camera_projection*camera_view_pts.transpose()).transpose();
-    Eigen::MatrixXf pixel_coordinates_2d_pts = (camera_projection_pts.array().colwise() / camera_projection_pts.col(2).array());
+
+    Eigen::MatrixXf camera_view_pts = (
+        _world_to_camera_view * world_pts
+    ).transpose();
+    // add col of ones
+    camera_view_pts.col(camera_view_pts.cols()-1) = 
+        Eigen::VectorXf::Ones(camera_view_pts.rows());
+
+    Eigen::MatrixXf camera_projection_pts = (
+        _camera_projection * camera_view_pts.transpose()
+    ).transpose();
+
+    Eigen::MatrixXf pixel_coordinates_2d_pts = (
+        camera_projection_pts.array().colwise() / 
+        camera_projection_pts.col(2).array()
+    );
     pixel_coordinates_2d_pts = pixel_coordinates_2d_pts.block(0,0,pixel_coordinates_2d_pts.rows(), 2);
+
     pixel_coordinates_2d_pts *= 0.5;
     Eigen::VectorXf centre(2);
     centre << 0.5, 0.5;
     pixel_coordinates_2d_pts = pixel_coordinates_2d_pts.rowwise() + centre.transpose();
+
     Eigen::VectorXf pixel_x = pixel_coordinates_2d_pts.col(0);
     Eigen::VectorXf pixel_y = pixel_coordinates_2d_pts.col(1);
 
@@ -35,31 +43,35 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
     pixel_x = pixel_x * 1280;
     pixel_y = (Eigen::VectorXf::Ones(pixel_y.rows())-pixel_y)*720;
 
-    // This could be a source of noise
-    Eigen::VectorXi pixel_xi = pixel_x.cast<int>();
-    Eigen::VectorXi pixel_yi = pixel_y.cast<int>();
-    
-    Eigen::MatrixXi pixels(pixel_xi.rows(), 2);
-    pixels << pixel_xi, pixel_yi;
+    assert(pixel_x.rows() == pixel_y.rows());
+    _frame.r->rowwise().reverseInPlace();
+    _frame.g->rowwise().reverseInPlace();
+    _frame.b->rowwise().reverseInPlace();
+    _frame.r->colwise().reverseInPlace();
+    _frame.g->colwise().reverseInPlace();
+    _frame.b->colwise().reverseInPlace();
 
-    // Eigen::MatrixXi colors(world_pts.rows(), 3);
-    for(auto i = 0; i<pixels.rows(); i++){
-        int pi_x = pixels(i, 0);
-        int pi_y = pixels(i, 1);
-        if(pi_x < 1280 and pi_y < 720 and pi_x >= 0 and pi_y >= 0){
-            int r_d = (*_frame.r)(pi_y, pi_x); //Confirm this height, width access
-            int g_d = (*_frame.g)(pi_y, pi_x);
-            int b_d = (*_frame.b)(pi_y, pi_x);
-            // colors << r_d, g_d, b_d;
-            cloud->points[i].r = r_d;
-            cloud->points[i].g = g_d;
-            cloud->points[i].b = b_d;
+    // new xyzrgb points, with uncolored points filtered out
+    std::vector<pcl::PointXYZRGB> newpts;
+    newpts.reserve(cloud->points.size());
+    for(auto i = 0; i < pixel_x.rows(); i++) {
+        int pi_x = (int)pixel_x(i);
+        int pi_y = (int)pixel_y(i);
+
+        if(pi_x < 1280 and pi_y < 720 and pi_x >= 0 and pi_y >= 0) {
+            uint8_t r = (*_frame.r)(pi_y, pi_x); //Confirm this height, width access
+            uint8_t g = (*_frame.g)(pi_y, pi_x);
+            uint8_t b = (*_frame.b)(pi_y, pi_x);
+            pcl::PointXYZRGB pt(r, g, b);
+            pt.x = cloud->points[i].x;
+            pt.y = cloud->points[i].y;
+            pt.z = cloud->points[i].z;
+            newpts.push_back(std::move(pt));
         }
-        // else{
-        //     colors << 0, 0, 0;  //Black is ignored in image segmentation for skin color.
-        // }
     }
-    return;
+    cloud->points.clear();
+    cloud->points.insert(cloud->points.end(), newpts.begin(), newpts.end());
+
 }
 
 }

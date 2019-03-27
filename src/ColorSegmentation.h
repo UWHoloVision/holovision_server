@@ -27,7 +27,7 @@ private:
     Eigen::Matrix3f cv_bg; 
     // Prediction per point: can make this 5xfaster by making it
     // a vector operation, but short of time right now.
-    bool predict(pcl::PointXYZRGB& pt);
+    // bool predict(pcl::PointXYZRGB& pt);
 };
 
 } // namespace holovision

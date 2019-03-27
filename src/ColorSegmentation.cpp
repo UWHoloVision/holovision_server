@@ -47,26 +47,48 @@ ColorSegmentation::ColorSegmentation(){
     cv_bg = read_bin_m(CV_BG_PATH);
 }
 
-double get_likelihood(pcl::PointXYZRGB &pt, Eigen::Vector3f &mean, Eigen::Matrix3f &cv){
-    Eigen::Vector3f c;
-    c << pt.r, pt.g, pt.b;
-    Eigen::Vector3f c_minus_mean = c - mean;
-    double exp_value = exp(-0.5*c_minus_mean.transpose()*(cv.inverse())*c_minus_mean);
-    double likelihood = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)))*exp_value;
+Eigen::VectorXf get_likelihood(Eigen::MatrixXf& points,  Eigen::Vector3f &mean, Eigen::Matrix3f &cv){
+    //points is 3xN
+    Eigen::MatrixXf c_minus_mean = points.colwise() - mean; // 3xN
+    Eigen::MatrixXf a1= c_minus_mean.transpose()*(cv.inverse()); // Nx3
+    Eigen::VectorXf a2 = (a1.array() * c_minus_mean.transpose().array()).rowwise().sum().matrix();
+    Eigen::VectorXf  exp_value = exp((-0.5*a2).array()).matrix();
+    double multiplier = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)));
+    Eigen::VectorXf likelihood = multiplier * exp_value;
     return likelihood;
+    // return Eigen::VectorXf::Ones(5);
 }
 
-bool ColorSegmentation::predict(pcl::PointXYZRGB &pt){
-    double likelihood_ball = get_likelihood(pt, mean_ball, cv_ball);
-    double likelihood_bg = get_likelihood(pt, mean_bg, cv_bg);
-
-    double neuman_test = likelihood_ball/likelihood_bg;
-    return neuman_test > 1.0;
-}
+// double get_likelihood(pcl::PointXYZRGB &pt, Eigen::Vector3f &mean, Eigen::Matrix3f &cv){
+//     Eigen::Vector3f c;
+//     c << pt.r, pt.g, pt.b;
+//     Eigen::Vector3f c_minus_mean = c - mean;
+//     double exp_value = exp(-0.5*c_minus_mean.transpose()*(cv.inverse())*c_minus_mean);
+//     double likelihood = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)))*exp_value;
+//     return likelihood;
+// }
 
 void ColorSegmentation::segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr original, pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered){
-    for(pcl::PointXYZRGB pt: original->points){
-        if(predict(pt)){
+    // Eigen::Matrix2f v;
+    // Eigen::Matrix2f t;
+    // v <<    1, 2,
+    //         3, 4;
+    // t <<    1, 2,
+    //         3, 4;
+    // auto result = (v.array() * t.array()).rowwise().sum();
+    // std::cout << exp(result) <<std::endl;
+    Eigen::MatrixXf pts(3, original->points.size());
+    for(auto i = 0; i < original->points.size(); i++){
+        pts(0, i) = original->points[i].r;
+        pts(1, i) = original->points[i].g;
+        pts(2, i) = original->points[i].b;
+    }
+    Eigen::VectorXf likelihood_ball = get_likelihood(pts, mean_ball, cv_ball);
+    Eigen::VectorXf likelihood_bg = get_likelihood(pts, mean_bg, cv_bg);
+    
+    for(auto i = 0; i< original->points.size(); i++){
+        pcl::PointXYZRGB pt = original->points[i];
+        if(likelihood_ball[i]/likelihood_bg[i] > 1.0){
             filtered->points.push_back(std::move(pt));
         }
     }

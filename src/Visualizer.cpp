@@ -3,12 +3,12 @@
 
 namespace holovision {
 
-Visualizer::Visualizer(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud): 
+Visualizer::Visualizer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr pointcloud): 
     _viewer(new PCLVisualizer("Point Cloud Viewer")) {
   config();
-  _viewer->addPointCloud<pcl::PointXYZ>(pointcloud, "point cloud");
+  _viewer->addPointCloud<pcl::PointXYZRGB>(pointcloud, "point cloud");
   _viewer->setPointCloudRenderingProperties(
-    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 1, "point cloud");
+    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "point cloud");
 }
 
 Visualizer::Visualizer(pcl::PolygonMesh::ConstPtr mesh):
@@ -25,9 +25,12 @@ void Visualizer::render() {
 }
 
 void Visualizer::config() {
-  _viewer->setBackgroundColor (0, 0, 0);
-  _viewer->addCoordinateSystem (0.6);
-  _viewer->initCameraParameters ();
+  _viewer->setBackgroundColor(0.224, 1.0, 0.78);
+  _viewer->addCoordinateSystem(0.6);
+  _viewer->initCameraParameters();
+  _viewer->setCameraPosition(
+    2.03131, 2.48013, -1.75667,
+    -0.593278, 0.748224, 0.29695);
 }
 
 } // namespace holovision

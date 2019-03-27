@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DepthFrameTransformer.h"
+#include "RGBFrameTransformer.h"
 #include "FrameMessage.h"
 #include "MeshMessage.h"
 #include "PointCloudUtils.h"
@@ -12,7 +13,7 @@
 // debugging utils
 namespace holovision {
 
-void render_30_depth_frames_as_mesh();
+void colorpoints_pipeline();
 
 void render_30_depth_frames_from_socket();
 

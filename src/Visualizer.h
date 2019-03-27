@@ -12,7 +12,7 @@ namespace holovision {
 
 class Visualizer { 
 public:
-  Visualizer(pcl::PointCloud<pcl::PointXYZ>::ConstPtr);
+  Visualizer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr);
   Visualizer(pcl::PolygonMesh::ConstPtr mesh);
 
   void render();

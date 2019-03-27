@@ -17,17 +17,18 @@ public:
   DepthFrameTransformer(FrameMessage&&);
 
   void get_points(pcl::PointCloud<pcl::PointXYZ>::Ptr);
+  Eigen::MatrixXf get_pts_matrix();
 
 private:
   const FrameMessage _frame;
   const std::string _unproj_path;
+  std::unique_ptr<Eigen::MatrixXf> _pts;
   // transform matrices
   Eigen::Matrix4f _cameraview_to_world;
   // u, v unprojection mappings
   std::unique_ptr<Eigen::MatrixXf> _u;
   std::unique_ptr<Eigen::MatrixXf> _v;
-  std::unique_ptr<Eigen::MatrixXf> _Z; 
-  std::unique_ptr<Eigen::MatrixXf> _pts;
+  std::unique_ptr<Eigen::MatrixXf> _Z;
 
   void compute_cameraview_to_world();
   void compute_uv_unprojection();

@@ -14,6 +14,9 @@ void RGBFrameTransformer::compute_world_to_cameraview(){
 void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Eigen::MatrixXf&& world_pts){
     compute_world_to_cameraview();
     // cameraview points
+    // make it 3d with last row 1
+    world_pts.row(world_pts.rows()-1) = Eigen::VectorXf::Ones(world_pts.cols());
+
     Eigen::MatrixXf cameraview_pts = (
         _world_to_camera_view * world_pts
     ).transpose();
@@ -52,7 +55,8 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
     _frame.b->colwise().reverseInPlace();
     // new xyzrgb points, with uncolored points filtered out
     std::vector<pcl::PointXYZRGB> newpts;
-    auto n = std::min((int)cloud->points.size(), (int)pixel_x.rows());
+    auto n = (int)cloud->points.size();
+    // std::cout<<cloud->points.size()<<" "<<world_pts.cols()<<" "<<pixel_x.rows()<<std::endl;
     newpts.reserve(n);
     for(auto i = 0; i < n; i++) {
         int pi_x = (int)pixel_x(i);
@@ -64,6 +68,12 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
             uint8_t b = (*_frame.b)(pi_y, pi_x);
             pcl::PointXYZRGB pt(r, g, b);
             auto& xyz = cloud->points.at(i);
+            if (isnan(pt.x) || isinf(pt.x))
+                continue;
+            if (isnan(pt.y) || isinf(pt.y))
+                continue;
+            if (isnan(pt.z) || isinf(pt.z))
+                continue;
             pt.x = xyz.x;
             pt.y = xyz.y;
             pt.z = xyz.z;

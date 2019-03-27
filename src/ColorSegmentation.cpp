@@ -1,4 +1,5 @@
 #include "ColorSegmentation.h"
+#include <math.h>
 
 namespace holovision{
 const std::string ColorSegmentation::MEAN_BALL_PATH = 
@@ -46,11 +47,31 @@ ColorSegmentation::ColorSegmentation(){
     cv_bg = read_bin_m(CV_BG_PATH);
 }
 
-bool ColorSegmentation::predict(pcl::PointXYZRGB pt){
-    return true;
+double get_likelihood(pcl::PointXYZRGB &pt, Eigen::Vector3f &mean, Eigen::Matrix3f &cv){
+    Eigen::Vector3f c;
+    c << pt.r, pt.g, pt.b;
+    Eigen::Vector3f c_minus_mean = c - mean;
+    double exp_value = exp(-0.5*c_minus_mean.transpose()*(cv.inverse())*c_minus_mean);
+    double likelihood = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)))*exp_value;
+    return likelihood;
 }
 
-void ColorSegmentation::segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr){
+bool ColorSegmentation::predict(pcl::PointXYZRGB &pt){
+    double likelihood_ball = get_likelihood(pt, mean_ball, cv_ball);
+    double likelihood_bg = get_likelihood(pt, mean_bg, cv_bg);
+
+    double neuman_test = likelihood_ball/likelihood_bg;
+    return neuman_test > 1.0;
+}
+
+void ColorSegmentation::segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr original, pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered){
+    for(pcl::PointXYZRGB pt: original->points){
+        if(predict(pt)){
+            filtered->points.push_back(std::move(pt));
+        }
+    }
+    filtered->width = filtered->points.size();
+    filtered->height = 1;
 }
 
 }

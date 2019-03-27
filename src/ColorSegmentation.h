@@ -14,7 +14,7 @@ public:
     // Constructor
     ColorSegmentation();
     // Associate depth points to RGB colors provided in the frame
-    void segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr);
+    void segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr, pcl::PointCloud<pcl::PointXYZRGB>::Ptr );
     static const std::string MEAN_BALL_PATH;
     static const std::string MEAN_BG_PATH;
     static const std::string CV_BALL_PATH;
@@ -27,7 +27,7 @@ private:
     Eigen::Matrix3f cv_bg; 
     // Prediction per point: can make this 5xfaster by making it
     // a vector operation, but short of time right now.
-    bool predict(pcl::PointXYZRGB pt);
+    bool predict(pcl::PointXYZRGB& pt);
 };
 
 } // namespace holovision

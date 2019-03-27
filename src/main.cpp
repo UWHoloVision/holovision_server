@@ -21,7 +21,7 @@ void color(holovision::FrameMessage& c_frame, Eigen::MatrixXf& world_pts) {
 }
 
 int main (int argc, char** argv) {  
-  // holovision::render_30_depth_frames_as_mesh();
-  holovision::render_30_depth_frames_from_socket();
+  holovision::render_30_depth_frames_as_mesh();
+  // holovision::render_30_depth_frames_from_socket();
   return (0);
 }

@@ -36,13 +36,25 @@ void render_30_depth_frames_as_mesh() {
     "263311650065",
     "263327047749"
   };
+  std::vector<std::string> colorframes {
+    "262754255709", "262768576911", "262785229469", "262802215094",
+    "262820865946", "262841515137", "262861165146", "262881148246",
+    "262900132159", "262924111809", "262942429637", "262973736463",
+    "262991055103", "263011371243", "263028023791", "263047673827",
+    "263066990805", "263084975559", "263112951875", "263128605247",
+    "263146923090", "263165906983", "263183225665", "263201876554",
+    "263216863843", "263233183336", "263248836728", "263289469013",
+    "263308785966", "263327103799"
+  };
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
-  for (auto depthframe: depthframes) {
+  for (auto i=0; i<depthframes.size(); i++){
+    auto depthframe = depthframes[i];
+    auto colorframe = colorframes[i];
     auto d_msg = holovision::read_msg_from_file("../out/" + depthframe + ".bin");
     holovision::DepthFrameTransformer dft(std::move(d_msg));
     dft.get_points(cloud);
     //Fix this
-    auto r_msg = holovision::read_msg_from_file("../out/" + depthframe + ".bin");
+    auto r_msg = holovision::read_msg_from_file("../out/" + colorframe + ".bin");
     holovision::RGBFrameTransformer rgbft(std::move(r_msg));
     rgbft.get_RGBD_pts(cloud, dft._pts);
   }

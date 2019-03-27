@@ -12,26 +12,22 @@ void RGBFrameTransformer::compute_world_to_cameraview(){
 }
 
 void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, std::shared_ptr<Eigen::MatrixXf> world_pts){
+    // Note: world_pts is 4xN, not Nx4 (is already homogenized)
     compute_world_to_cameraview();
-
     // Note this currently changes the world_pts matrix.
-    // world_pts.conservativeResize(world_pts.rows(), world_pts.cols()+1);
-    // world_pts.col(world_pts.cols()-1) = Eigen::VectorXf::Ones(world_pts.rows());
-    *world_pts = world_pts->rowwise().homogeneous();
-
-    Eigen::MatrixXf camera_view_pts = (_world_to_camera_view * world_pts->transpose()).transpose();
+    // world_pts->conservativeResize(world_pts->rows(), world_pts->cols()+1);
+    // world_pts->col(world_pts->cols()-1) = Eigen::VectorXf::Ones(world_pts->rows());
+    *world_pts = world_pts->block(0,0,3,world_pts->cols()); // Create 3-D
+    *world_pts = world_pts->colwise().homogeneous();
+    Eigen::MatrixXf camera_view_pts = (_world_to_camera_view * (*world_pts)).transpose();
     camera_view_pts.col(camera_view_pts.cols()-1) = Eigen::VectorXf::Ones(camera_view_pts.rows());
-
     Eigen::MatrixXf camera_projection_pts = (_camera_projection*camera_view_pts.transpose()).transpose();
-
     Eigen::MatrixXf pixel_coordinates_2d_pts = (camera_projection_pts.array().colwise() / camera_projection_pts.col(2).array());
     pixel_coordinates_2d_pts = pixel_coordinates_2d_pts.block(0,0,pixel_coordinates_2d_pts.rows(), 2);
-
     pixel_coordinates_2d_pts *= 0.5;
     Eigen::VectorXf centre(2);
     centre << 0.5, 0.5;
     pixel_coordinates_2d_pts = pixel_coordinates_2d_pts.rowwise() + centre.transpose();
-
     Eigen::VectorXf pixel_x = pixel_coordinates_2d_pts.col(0);
     Eigen::VectorXf pixel_y = pixel_coordinates_2d_pts.col(1);
 

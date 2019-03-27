@@ -25,6 +25,7 @@ void colorpoints_pipeline() {
   "7354082636726", "7354110279985"
   };
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr agg_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  holovision::ColorSegmentation color_segmentor;
   for (auto i = 0; i < depthframes.size(); i++) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr colorcloud(new pcl::PointCloud<pcl::PointXYZRGB>);

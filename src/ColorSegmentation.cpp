@@ -56,27 +56,9 @@ Eigen::VectorXf get_likelihood(Eigen::MatrixXf& points,  Eigen::Vector3f &mean, 
     double multiplier = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)));
     Eigen::VectorXf likelihood = multiplier * exp_value;
     return likelihood;
-    // return Eigen::VectorXf::Ones(5);
 }
 
-// double get_likelihood(pcl::PointXYZRGB &pt, Eigen::Vector3f &mean, Eigen::Matrix3f &cv){
-//     Eigen::Vector3f c;
-//     c << pt.r, pt.g, pt.b;
-//     Eigen::Vector3f c_minus_mean = c - mean;
-//     double exp_value = exp(-0.5*c_minus_mean.transpose()*(cv.inverse())*c_minus_mean);
-//     double likelihood = 1.0 / (pow(M_PI*2.0,3/2)*(pow(cv.determinant(),1/2)))*exp_value;
-//     return likelihood;
-// }
-
 void ColorSegmentation::segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr original, pcl::PointCloud<pcl::PointXYZRGB>::Ptr filtered){
-    // Eigen::Matrix2f v;
-    // Eigen::Matrix2f t;
-    // v <<    1, 2,
-    //         3, 4;
-    // t <<    1, 2,
-    //         3, 4;
-    // auto result = (v.array() * t.array()).rowwise().sum();
-    // std::cout << exp(result) <<std::endl;
     Eigen::MatrixXf pts(3, original->points.size());
     for(auto i = 0; i < original->points.size(); i++){
         pts(0, i) = original->points[i].r;

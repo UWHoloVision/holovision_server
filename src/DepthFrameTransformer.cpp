@@ -16,7 +16,7 @@ DepthFrameTransformer::DepthFrameTransformer(FrameMessage&& frame) :
   _frame(std::move(frame)), 
   _unproj_path(DepthFrameTransformer::DEFAULT_UV_UNPROJECTION_BIN_PATH) {}
 
-void DepthFrameTransformer::get_points(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud_ptr) {
+void DepthFrameTransformer::get_points(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud_ptr) {
   compute_cameraview_to_world();
   compute_uv_unprojection();
   compute_cameraview_pointcloud();
@@ -32,7 +32,15 @@ void DepthFrameTransformer::get_points(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud
       continue;
     if (isnan(z) || isinf(z))
       continue;
-    cloud_ptr->points.emplace_back(x, y, z);
+
+    pcl::PointXYZRGB p; // Will this point be lost after this function ends?
+    p.x = x;
+    p.y = y;
+    p.z = z;
+    p.r = 0;
+    p.g = 0;
+    p.b = 0;
+    cloud_ptr->points.emplace_back(p);
   }
 }
 

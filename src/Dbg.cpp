@@ -36,21 +36,25 @@ void render_30_depth_frames_as_mesh() {
     "263311650065",
     "263327047749"
   };
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
   for (auto depthframe: depthframes) {
     auto d_msg = holovision::read_msg_from_file("../out/" + depthframe + ".bin");
     holovision::DepthFrameTransformer dft(std::move(d_msg));
     dft.get_points(cloud);
+    //Fix this
+    auto r_msg = holovision::read_msg_from_file("../out/" + depthframe + ".bin");
+    holovision::RGBFrameTransformer rgbft(std::move(r_msg));
+    rgbft.get_RGBD_pts(cloud, dft._pts);
   }
-  auto mesh = holovision::pointcloud_to_mesh(cloud);
-  holovision::Visualizer visualizer(mesh);
+  // auto mesh = holovision::pointcloud_to_mesh(cloud);
+  holovision::Visualizer visualizer(cloud);
   visualizer.render();
 }
 
 void render_30_depth_frames_from_socket() {
   FrameSocket fs;
   fs.connect();
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
   for(auto i = 0; i < 30; i++) {
     std::cout << "frame " << i << std::endl;
     auto d_msg = fs.poll_depth();
@@ -58,9 +62,9 @@ void render_30_depth_frames_from_socket() {
     holovision::DepthFrameTransformer dft(std::move(d_msg));
     dft.get_points(cloud);
   }
-  auto mesh = holovision::pointcloud_to_mesh(cloud);
-  holovision::Visualizer visualizer(cloud);
-  visualizer.render();
+  // auto mesh = holovision::pointcloud_to_mesh(cloud);
+  // holovision::Visualizer visualizer(cloud);
+  // visualizer.render();
 }
 
 } // namespace holovision

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "DepthFrameTransformer.h"
+#include "RGBFrameTransformer.h"
 #include "FrameMessage.h"
 #include "PointCloudUtils.h"
 #include "Visualizer.h"

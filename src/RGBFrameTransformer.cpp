@@ -11,7 +11,11 @@ void RGBFrameTransformer::compute_world_to_cameraview(){
         _frame.frame_to_origin.transpose().inverse();
 }
 
-void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cloud, Eigen::MatrixXf&& world_pts){
+void RGBFrameTransformer::get_RGBD_pts(
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr dest, 
+        pcl::PointCloud<pcl::PointXYZ>::Ptr cloud, 
+        Eigen::MatrixXf&& world_pts) {
+    // compute transformation matrix
     compute_world_to_cameraview();
     // cameraview points
     // make it 3d with last row 1
@@ -45,7 +49,6 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
     // Multiplication by image width
     pixel_x = pixel_x * 1280;
     pixel_y = (Eigen::VectorXf::Ones(pixel_y.rows())-pixel_y)*720;
-    assert(pixel_x.rows() == pixel_y.rows());
     // Must flip image horizontal/vertically due to unity coordinate system (?)
     _frame.r->rowwise().reverseInPlace();
     _frame.g->rowwise().reverseInPlace();
@@ -53,12 +56,9 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
     _frame.r->colwise().reverseInPlace();
     _frame.g->colwise().reverseInPlace();
     _frame.b->colwise().reverseInPlace();
+    assert(cloud->points.size() == pixel_x.rows());
     // new xyzrgb points, with uncolored points filtered out
-    std::vector<pcl::PointXYZRGB> newpts;
-    auto n = (int)cloud->points.size();
-    // std::cout<<cloud->points.size()<<" "<<world_pts.cols()<<" "<<pixel_x.rows()<<std::endl;
-    newpts.reserve(n);
-    for(auto i = 0; i < n; i++) {
+    for(auto i = 0; i < cloud->points.size(); i++) {
         int pi_x = (int)pixel_x(i);
         int pi_y = (int)pixel_y(i);
         // filter out invalid pixels; e.g. NaN is set to -MAX_INT
@@ -68,20 +68,20 @@ void RGBFrameTransformer::get_RGBD_pts(pcl::PointCloud<pcl::PointXYZRGB>::Ptr cl
             uint8_t b = (*_frame.b)(pi_y, pi_x);
             pcl::PointXYZRGB pt(r, g, b);
             auto& xyz = cloud->points.at(i);
+            pt.x = xyz.x;
+            pt.y = xyz.y;
+            pt.z = xyz.z;
+            // filter out invalid pixels; e.g. bad depth
             if (isnan(pt.x) || isinf(pt.x))
                 continue;
             if (isnan(pt.y) || isinf(pt.y))
                 continue;
             if (isnan(pt.z) || isinf(pt.z))
                 continue;
-            pt.x = xyz.x;
-            pt.y = xyz.y;
-            pt.z = xyz.z;
-            newpts.push_back(std::move(pt));
+            // add to destination pointcloud
+            dest->points.push_back(std::move(pt));
         }
     }
-    cloud->points.clear();
-    cloud->points.insert(cloud->points.end(), newpts.begin(), newpts.end());
 }
 
 }

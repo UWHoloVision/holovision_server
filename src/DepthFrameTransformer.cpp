@@ -32,18 +32,8 @@ void DepthFrameTransformer::get_points(pcl::PointCloud<pcl::PointXYZ>::Ptr cloud
     auto x = (*_pts)(0, col);
     auto y = (*_pts)(1, col);
     auto z = (*_pts)(2, col);
-    if (isnan(x) || isinf(x))
-      continue;
-    if (isnan(y) || isinf(y))
-      continue;
-    if (isnan(z) || isinf(z))
-      continue;
 
-    pcl::PointXYZ p; // Will this point be lost after this function ends?
-    p.x = x;
-    p.y = y;
-    p.z = z;
-    cloud_ptr->points.push_back(std::move(p));
+    cloud_ptr->points.emplace_back(x, y, z);
   }
 }
 

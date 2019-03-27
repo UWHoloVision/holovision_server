@@ -4,9 +4,17 @@
 namespace holovision {
 
 Visualizer::Visualizer(pcl::PointCloud<pcl::PointXYZRGB>::ConstPtr pointcloud): 
-    _viewer(new PCLVisualizer("Point Cloud Viewer")) {
+    _viewer(new PCLVisualizer("Colored Point Cloud Viewer")) {
   config();
   _viewer->addPointCloud<pcl::PointXYZRGB>(pointcloud, "point cloud");
+  _viewer->setPointCloudRenderingProperties(
+    pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "point cloud");
+}
+
+Visualizer::Visualizer(pcl::PointCloud<pcl::PointXYZ>::ConstPtr pointcloud): 
+    _viewer(new PCLVisualizer("Point Cloud Viewer")) {
+  config();
+  _viewer->addPointCloud<pcl::PointXYZ>(pointcloud, "point cloud");
   _viewer->setPointCloudRenderingProperties(
     pcl::visualization::PCL_VISUALIZER_POINT_SIZE, 2, "point cloud");
 }

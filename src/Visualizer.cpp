@@ -28,6 +28,9 @@ void Visualizer::config() {
   _viewer->setBackgroundColor(0.224, 1.0, 0.78);
   _viewer->addCoordinateSystem(0.6);
   _viewer->initCameraParameters();
+  _viewer->setCameraPosition(
+    2.03131, 2.48013, -1.75667,
+    -0.593278, 0.748224, 0.29695);
 }
 
 } // namespace holovision

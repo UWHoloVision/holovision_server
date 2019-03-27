@@ -5,6 +5,7 @@
 #include <pcl/common/common_headers.h>
 #include <pcl/io/pcd_io.h>
 #include <Eigen/Dense>
+#include <algorithm>
 
 
 namespace holovision {

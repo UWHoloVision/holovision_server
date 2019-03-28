@@ -70,7 +70,7 @@ void ColorSegmentation::segmentColors(pcl::PointCloud<pcl::PointXYZRGB>::Ptr ori
     
     for(auto i = 0; i< original->points.size(); i++){
         pcl::PointXYZRGB pt = original->points[i];
-        if(likelihood_ball[i]/likelihood_bg[i] > 1.0){
+        if(likelihood_ball[i]/likelihood_bg[i] >= 1.0){
             filtered->points.push_back(std::move(pt));
         }
     }

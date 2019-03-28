@@ -1,4 +1,5 @@
 #include "Dbg.h"
+#include <pcl/io/ply_io.h>
 
 namespace holovision {
 
@@ -84,7 +85,9 @@ void colorpoints_pipeline() {
   agg_cloud->height = 1;
   agg_cloud->width = agg_cloud->points.size();
   pcl::io::savePCDFileASCII ("breast_source_cloud.pcd", *agg_cloud);
+  pcl::io::savePLYFile("breast_source_cloud.ply", *agg_cloud);
   std::cout<<"Done saving point cloud"<<std::endl;
+  
 
   // Apply visualization
   holovision::Visualizer visualizer(agg_cloud);

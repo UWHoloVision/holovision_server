@@ -66,6 +66,36 @@ void colorpoints_pipeline() {
   visualizer.render();
 }
 
+// read frames, then build mesh and send to hololens
+void meshsocket_pipeline(int n_frames) {
+  FrameSocket fs;
+  fs.connect();
+  pcl::PointCloud<pcl::PointXYZ>::Ptr agg_pts(new pcl::PointCloud<pcl::PointXYZ>);
+  for(auto i = 0; i < n_frames; i++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr d_pts(new pcl::PointCloud<pcl::PointXYZ>);
+    // read n frames
+    std::cout << "frame " << i << std::endl;
+    auto d_msg = fs.poll_depth();
+    auto rgb_msg = fs.poll_depth(); // ignored
+    DepthFrameTransformer dft(std::move(d_msg));
+    // add to pt cloud
+    dft.get_points(d_pts);
+    downsample_voxel_approx(d_pts); // to help w/ unity limit
+    if (d_pts->size() + agg_pts->size() > 65534) {
+      break; // unity limit for mesh
+    }
+    *agg_pts += *d_pts;
+  }
+  auto mesh = pointcloud_to_mesh(agg_pts);
+  MeshSocket ms;
+  ms.connect();
+  // write mesh
+  ms.send_mesh(mesh);
+  // visualize
+  holovision::Visualizer visualizer(mesh);
+  visualizer.render();
+}
+
 void render_30_depth_frames_from_socket() {
   FrameSocket fs;
   fs.connect();

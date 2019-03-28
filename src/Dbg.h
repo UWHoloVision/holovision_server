@@ -9,6 +9,12 @@
 
 #include "FrameSocket.h"
 
+#include <glob.h>
+#include <string.h>
+#include <stdexcept>
+#include <vector>
+#include <sstream>
+
 // debugging utils
 namespace holovision {
 

@@ -21,9 +21,8 @@
 // debugging utils
 namespace holovision {
 
+void master_pipeline(std::string, int);
 void colorpoints_pipeline();
-void meshsocket_pipeline(int);
-
-void render_30_depth_frames_from_socket();
+void meshsocket_pipeline(std::string, int);
 
 } // namespace holovision

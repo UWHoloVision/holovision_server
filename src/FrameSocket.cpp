@@ -2,13 +2,13 @@
 
 namespace holovision {
 
-FrameSocket::FrameSocket(): 
-  _socket(std::make_unique<boost::asio::ip::tcp::socket>(_io_service)) {}
+FrameSocket::FrameSocket(std::string ip): 
+  _ip(ip), _socket(std::make_unique<boost::asio::ip::tcp::socket>(_io_service)) {}
 
 void FrameSocket::connect() {
   _socket->connect(
     boost::asio::ip::tcp::endpoint(
-      boost::asio::ip::address::from_string("192.168.0.102"),
+      boost::asio::ip::address::from_string(_ip),
       9090
     )
   );

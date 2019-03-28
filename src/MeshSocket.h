@@ -13,10 +13,11 @@ namespace holovision {
 // outbound TCP socket
 class MeshSocket {
 public:
-  MeshSocket();
+  MeshSocket(std::string);
   void connect();
   void send_mesh(pcl::PolygonMesh::Ptr);
 private:
+  std::string _ip;
   boost::asio::io_service _io_service;
   std::unique_ptr<boost::asio::ip::tcp::socket> _socket;
 };

@@ -10,10 +10,11 @@ namespace holovision {
 
 class FrameSocket {
 public:
-  FrameSocket();
+  FrameSocket(std::string);
   void connect();
   FrameMessage poll_depth();
 private:
+  std::string _ip;
   boost::asio::io_service _io_service;
   std::unique_ptr<boost::asio::ip::tcp::socket> _socket;
 };

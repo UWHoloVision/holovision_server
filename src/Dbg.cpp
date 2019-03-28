@@ -34,6 +34,88 @@ std::vector<std::string> get_colorframe_files() {
   return glob_snapshots("../out/*.ppm");
 }
 
+void master_pipeline(std::string ip, int n_frames) {
+  FrameSocket fs(ip);
+  fs.connect();
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr agg_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  holovision::ColorSegmentation color_segmentor;
+  for(auto i = 0; i < n_frames; i++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr colorcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    // read n frames
+    std::cout << "frame " << i << std::endl;
+    // process depth frame
+    auto d_msg = fs.poll_depth();
+    auto r_msg = fs.poll_depth();
+    DepthFrameTransformer dft(std::move(d_msg));
+    // add to pt cloud
+    dft.get_points(pointcloud);
+    // process color frame
+    holovision::RGBFrameTransformer rgbft(std::move(r_msg));
+    // compute rgbd points
+    rgbft.get_RGBD_pts(colorcloud, pointcloud, std::move(dft.get_pts_matrix()));
+    // apply filtering
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filter_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    color_segmentor.segmentColors(colorcloud, filter_cloud);
+    std::cout << "Segmentation done" << std::endl;
+    std::cout << colorcloud->points.size() << std::endl;
+    std::cout << "Done" << std::endl;
+    std::cout << filter_cloud->points.size() << std::endl;
+    // Aggregate clouds
+    *agg_cloud += *filter_cloud;
+  }
+
+  // Add registration
+  holovision::Registration registration;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr agg_cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::copyPointCloud(*agg_cloud, *agg_cloud_xyz);
+  registration.register_points(agg_cloud_xyz);
+  std::cout << "done registering clouds" << std::endl;
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_clouds(new pcl::PointCloud<pcl::PointXYZRGB>);
+
+  // Apply on tumors
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tumor_1_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tumor_2_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  registration.apply_transform(registration.tumor_1, tumor_1_cloud);
+  std::cout << registration.tumor_1->points.size() <<std::endl;
+  registration.apply_transform(registration.tumor_2, tumor_2_cloud);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tumor_1_cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+  for(pcl::PointXYZ xyz: tumor_1_cloud->points){
+      pcl::PointXYZRGB pt(255, 255, 255);
+        pt.x = xyz.x;
+        pt.y = xyz.y;
+        pt.z = xyz.z;
+      tumor_1_cloud_rgb->points.push_back(std::move(pt));
+  }
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tumor_2_cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+  for(pcl::PointXYZ xyz: tumor_2_cloud->points){
+      pcl::PointXYZRGB pt(255, 255, 255);
+      pt.x = xyz.x;
+      pt.y = xyz.y;
+      pt.z = xyz.z;
+      tumor_2_cloud_rgb->points.push_back(std::move(pt));
+  }
+  std::cout << "MESH SIZES: " << tumor_1_cloud->size() << " " << tumor_2_cloud->size() << std::endl;
+  // render
+
+  pcl::PointCloud<pcl::PointXYZ>::Ptr agg_tumors_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+  *agg_tumors_xyz += *tumor_1_cloud;
+  *agg_tumors_xyz += *tumor_2_cloud;
+  auto tumor_mesh = pointcloud_to_mesh(agg_tumors_xyz);
+  MeshSocket ms(ip);
+  ms.connect();
+  // write mesh
+  ms.send_mesh(tumor_mesh);
+  // visualize
+  *merged_clouds += *agg_cloud;
+  *merged_clouds += *tumor_1_cloud_rgb;
+  *merged_clouds += *tumor_2_cloud_rgb;
+  holovision::Visualizer visualizer(merged_clouds);
+  visualizer.render();
+}
+
 // renders depth frames of a room as a mesh
 void colorpoints_pipeline() {
   std::vector<std::string> depthframes = get_depthframe_files();
@@ -124,8 +206,8 @@ void colorpoints_pipeline() {
 }
 
 // read frames, then build mesh and send to hololens
-void meshsocket_pipeline(int n_frames) {
-  FrameSocket fs;
+void meshsocket_pipeline(std::string ip, int n_frames) {
+  FrameSocket fs(ip);
   fs.connect();
   pcl::PointCloud<pcl::PointXYZ>::Ptr agg_pts(new pcl::PointCloud<pcl::PointXYZ>);
   for(auto i = 0; i < n_frames; i++) {
@@ -144,28 +226,12 @@ void meshsocket_pipeline(int n_frames) {
     *agg_pts += *d_pts;
   }
   auto mesh = pointcloud_to_mesh(agg_pts);
-  MeshSocket ms;
+  MeshSocket ms(ip);
   ms.connect();
   // write mesh
   ms.send_mesh(mesh);
   // visualize
   holovision::Visualizer visualizer(mesh);
-  visualizer.render();
-}
-
-void render_30_depth_frames_from_socket() {
-  FrameSocket fs;
-  fs.connect();
-  pcl::PointCloud<pcl::PointXYZ>::Ptr cloud(new pcl::PointCloud<pcl::PointXYZ>);
-  for(auto i = 0; i < 30; i++) {
-    std::cout << "frame " << i << std::endl;
-    auto d_msg = fs.poll_depth();
-    auto rgb_msg = fs.poll_depth();
-    holovision::DepthFrameTransformer dft(std::move(d_msg));
-    dft.get_points(cloud);
-  }
-  auto mesh = holovision::pointcloud_to_mesh(cloud);
-  holovision::Visualizer visualizer(cloud);
   visualizer.render();
 }
 

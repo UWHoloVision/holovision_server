@@ -19,7 +19,7 @@ int main (int argc, char* argv[]) {
     )
     (
       "cmd",
-      po::value<std::string>(&CMD)->default_value("colorpts"),
+      po::value<std::string>(&CMD)->default_value("master"),
       "Pipeline to run"
     );
   po::variables_map vm;
@@ -33,11 +33,14 @@ int main (int argc, char* argv[]) {
   std::cout << "IP Address set to " << IP_ADDRESS << std::endl;
   std::cout << "Running pipeline " << CMD << std::endl;
   // read in command
-  if (CMD.compare("colorpts") == 0) {
+  if (CMD.compare("master") == 0) {
+    holovision::master_pipeline(IP_ADDRESS, 16);
+  }
+  else if (CMD.compare("colorpts") == 0) {
     holovision::colorpoints_pipeline();
   }
   else if (CMD.compare("meshsocket") == 0) {
-    holovision::meshsocket_pipeline(10);
+    holovision::meshsocket_pipeline(IP_ADDRESS, 10);
   }
   else {
     std::cout << "Invalid arg " << CMD << std::endl;

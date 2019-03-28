@@ -37,8 +37,7 @@ int main (int argc, char* argv[]) {
     holovision::colorpoints_pipeline();
   }
   else if (CMD.compare("meshsocket") == 0) {
-    int frames = argc > 2 ? std::stoi(argv[2]) : 4;
-    holovision::meshsocket_pipeline(frames);
+    holovision::meshsocket_pipeline(4);
   }
   else {
     std::cout << "Invalid arg " << CMD << std::endl;

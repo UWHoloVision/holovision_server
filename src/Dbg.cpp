@@ -45,13 +45,15 @@ void colorpoints_pipeline() {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr colorcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
     std::cout << "frame " << i << std::endl;
+
     // read depth frame
     auto depthframe = depthframes.at(i);
     auto d_msg = holovision::read_msg_from_file(depthframe);
     holovision::DepthFrameTransformer dft(std::move(d_msg));
-    
+
     // Apply depth transform
     dft.get_points(pointcloud);
+
     // read color frame
     auto colorframe = colorframes.at(i);
     auto r_msg = holovision::read_msg_from_file(colorframe);
@@ -59,9 +61,32 @@ void colorpoints_pipeline() {
     
     // compute rgbd points
     rgbft.get_RGBD_pts(colorcloud, pointcloud, std::move(dft.get_pts_matrix()));
-    // add to agg_cloud
-    *agg_cloud += *colorcloud;
+    // apply filtering
+    pcl::PointCloud<pcl::PointXYZRGB>::Ptr filter_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+    color_segmentor.segmentColors(colorcloud, filter_cloud);
+    std::cout << "Segmentation done" << std::endl;
+    std::cout << colorcloud->points.size() << std::endl;
+    std::cout << "Done" << std::endl;
+    std::cout << filter_cloud->points.size() << std::endl;
+    // Aggregate clouds
+    *agg_cloud += *filter_cloud;
   }
+
+  // Add registration
+  // holovision::Registration registration;
+  // registration.register_points(agg_cloud);
+  // std::cout << "done registering clouds" <<std::endl;
+  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_clouds(new pcl::PointCloud<pcl::PointXYZRGB>);
+  
+  // registration.apply_transform_on_source(merged_clouds);
+  // *merged_clouds += * agg_cloud;
+  // REMOVE ONE OFF
+  agg_cloud->height = 1;
+  agg_cloud->width = agg_cloud->points.size();
+  pcl::io::savePCDFileASCII ("breast_source_cloud.pcd", *agg_cloud);
+  std::cout<<"Done saving point cloud"<<std::endl;
+
+  // Apply visualization
   holovision::Visualizer visualizer(agg_cloud);
   visualizer.render();
 }

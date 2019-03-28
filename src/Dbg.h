@@ -6,6 +6,7 @@
 #include "PointCloudUtils.h"
 #include "Visualizer.h"
 #include "ColorSegmentation.h"
+#include "Registration.h"
 
 #include "FrameSocket.h"
 

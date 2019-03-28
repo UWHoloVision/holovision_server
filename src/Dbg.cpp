@@ -1,5 +1,4 @@
 #include "Dbg.h"
-#include <pcl/io/ply_io.h>
 
 namespace holovision {
 
@@ -74,23 +73,53 @@ void colorpoints_pipeline() {
   }
 
   // Add registration
-  // holovision::Registration registration;
-  // registration.register_points(agg_cloud);
-  // std::cout << "done registering clouds" <<std::endl;
-  // pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_clouds(new pcl::PointCloud<pcl::PointXYZRGB>);
-  
+  holovision::Registration registration;
+  pcl::PointCloud<pcl::PointXYZ>::Ptr agg_cloud_xyz(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::copyPointCloud(*agg_cloud, *agg_cloud_xyz);
+  registration.register_points(agg_cloud_xyz);
+  std::cout << "done registering clouds" <<std::endl;
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr merged_clouds(new pcl::PointCloud<pcl::PointXYZRGB>);
+  // Apply on source: ONlY FOR VISUALIZATION PURPOSES: turn it off for demo
   // registration.apply_transform_on_source(merged_clouds);
-  // *merged_clouds += * agg_cloud;
+
+  // Apply on tumors
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tumor_1_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr tumor_2_cloud(new pcl::PointCloud<pcl::PointXYZ>);
+  registration.apply_transform(registration.tumor_1, tumor_1_cloud);
+  std::cout << registration.tumor_1->points.size()<<std::endl;
+  registration.apply_transform(registration.tumor_2, tumor_2_cloud);
+
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tumor_1_cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+  for(pcl::PointXYZ xyz: tumor_1_cloud->points){
+      pcl::PointXYZRGB pt(255, 255, 255);
+        pt.x = xyz.x;
+        pt.y = xyz.y;
+        pt.z = xyz.z;
+      tumor_1_cloud_rgb->points.push_back(std::move(pt));
+  }
+  pcl::PointCloud<pcl::PointXYZRGB>::Ptr tumor_2_cloud_rgb(new pcl::PointCloud<pcl::PointXYZRGB>);
+  for(pcl::PointXYZ xyz: tumor_2_cloud->points){
+      pcl::PointXYZRGB pt(255, 255, 255);
+        pt.x = xyz.x;
+        pt.y = xyz.y;
+        pt.z = xyz.z;
+        tumor_2_cloud_rgb->points.push_back(std::move(pt));
+  }
+
+  *merged_clouds += *agg_cloud;
+  *merged_clouds += *tumor_1_cloud_rgb;
+  *merged_clouds += *tumor_2_cloud_rgb;
   // REMOVE ONE OFF
-  agg_cloud->height = 1;
-  agg_cloud->width = agg_cloud->points.size();
-  pcl::io::savePCDFileASCII ("breast_source_cloud.pcd", *agg_cloud);
-  pcl::io::savePLYFile("breast_source_cloud.ply", *agg_cloud);
-  std::cout<<"Done saving point cloud"<<std::endl;
-  
+  merged_clouds->height = 1;
+  merged_clouds->width = agg_cloud->points.size();
+
+  // pcl::io::savePCDFileASCII ("breast_source_cloud.pcd", *agg_cloud);
+  // pcl::io::savePLYFile("breast_source_cloud.ply", *agg_cloud);
+  // std::cout<<"Done saving point cloud"<<std::endl;
 
   // Apply visualization
-  holovision::Visualizer visualizer(agg_cloud);
+  holovision::Visualizer visualizer(merged_clouds);
   visualizer.render();
 }
 

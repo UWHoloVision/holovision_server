@@ -16,7 +16,7 @@ MeshMessage create_mesh_message(pcl::PolygonMesh::Ptr mesh) {
     pcl::PointXYZ& point = mesh_cloud->at(i);
     msg.points.push_back(point.x);
     msg.points.push_back(point.y);
-    msg.points.push_back(point.z);
+    msg.points.push_back(-1*point.z); // unity coordinates rhs -> lhs
   }
   // copy triangle indices
   for (auto& polygon: mesh->polygons) {

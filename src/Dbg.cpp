@@ -70,8 +70,9 @@ void colorpoints_pipeline() {
 void meshsocket_pipeline(int n_frames) {
   FrameSocket fs;
   fs.connect();
-  pcl::PointCloud<pcl::PointXYZ>::Ptr d_pts(new pcl::PointCloud<pcl::PointXYZ>);
+  pcl::PointCloud<pcl::PointXYZ>::Ptr agg_pts(new pcl::PointCloud<pcl::PointXYZ>);
   for(auto i = 0; i < n_frames; i++) {
+    pcl::PointCloud<pcl::PointXYZ>::Ptr d_pts(new pcl::PointCloud<pcl::PointXYZ>);
     // read n frames
     std::cout << "frame " << i << std::endl;
     auto d_msg = fs.poll_depth();
@@ -79,8 +80,13 @@ void meshsocket_pipeline(int n_frames) {
     DepthFrameTransformer dft(std::move(d_msg));
     // add to pt cloud
     dft.get_points(d_pts);
+    downsample_voxel_approx(d_pts); // to help w/ unity limit
+    if (d_pts->size() + agg_pts->size() > 65534) {
+      break; // unity limit for mesh
+    }
+    *agg_pts += *d_pts;
   }
-  auto mesh = pointcloud_to_mesh(d_pts);
+  auto mesh = pointcloud_to_mesh(agg_pts);
   MeshSocket ms;
   ms.connect();
   // write mesh

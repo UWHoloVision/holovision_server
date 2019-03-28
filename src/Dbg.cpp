@@ -60,7 +60,7 @@ void colorpoints_pipeline() {
     // compute rgbd points
     rgbft.get_RGBD_pts(colorcloud, pointcloud, std::move(dft.get_pts_matrix()));
     // add to agg_cloud
-    *agg_cloud += *filtercloud;
+    *agg_cloud += *colorcloud;
   }
   holovision::Visualizer visualizer(agg_cloud);
   visualizer.render();

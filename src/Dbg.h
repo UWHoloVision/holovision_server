@@ -5,6 +5,7 @@
 #include "FrameMessage.h"
 #include "PointCloudUtils.h"
 #include "Visualizer.h"
+#include "ColorSegmentation.h"
 
 #include "FrameSocket.h"
 

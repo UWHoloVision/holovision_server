@@ -6,6 +6,7 @@
 #include "MeshMessage.h"
 #include "PointCloudUtils.h"
 #include "Visualizer.h"
+#include "ColorSegmentation.h"
 
 #include "FrameSocket.h"
 #include "MeshSocket.h"

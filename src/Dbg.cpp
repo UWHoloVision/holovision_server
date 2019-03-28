@@ -40,6 +40,7 @@ void colorpoints_pipeline() {
   std::vector<std::string> colorframes = get_colorframe_files();
 
   pcl::PointCloud<pcl::PointXYZRGB>::Ptr agg_cloud(new pcl::PointCloud<pcl::PointXYZRGB>);
+  holovision::ColorSegmentation color_segmentor;
   for (auto i = 0; i < depthframes.size(); i++) {
     pcl::PointCloud<pcl::PointXYZ>::Ptr pointcloud(new pcl::PointCloud<pcl::PointXYZ>);
     pcl::PointCloud<pcl::PointXYZRGB>::Ptr colorcloud(new pcl::PointCloud<pcl::PointXYZRGB>);
@@ -48,11 +49,14 @@ void colorpoints_pipeline() {
     auto depthframe = depthframes.at(i);
     auto d_msg = holovision::read_msg_from_file(depthframe);
     holovision::DepthFrameTransformer dft(std::move(d_msg));
+    
+    // Apply depth transform
     dft.get_points(pointcloud);
     // read color frame
     auto colorframe = colorframes.at(i);
     auto r_msg = holovision::read_msg_from_file(colorframe);
     holovision::RGBFrameTransformer rgbft(std::move(r_msg));
+    
     // compute rgbd points
     rgbft.get_RGBD_pts(colorcloud, pointcloud, std::move(dft.get_pts_matrix()));
     // add to agg_cloud

@@ -8,7 +8,7 @@ posture can distort or displace the tumor due to the
 malleability of breast tissue, making surgery difficult. 25%
 of patients must undergo repeated treatments or
 mastectomy due to residual tumors. The HoloVision can
-render a real-time hologram of the tumor onto the patient,
+render a real-time hologram of the tumor onto the patient, (based on the MRI scan of the tumor)
 and can assist the surgeon in preparing. 
 
 ## Pipeline:
